@@ -20,4 +20,6 @@ proxylist = []
 ## [MISCELLANEOUS] ##
 
 timeout = 10
-
+delay_hours = 48
+daily_cap = 100
+template = "Hi {first}, thanks for connecting!"

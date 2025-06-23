@@ -22,6 +22,35 @@ export LI_PASSWORD={password}
 
 `python3 ScrapedIn.py`
 
+## Automated Messaging
+
+To enable automated direct messaging, you'll need to set up a cron job to run the `queue_builder.py` and `ScrapedIn.py` scripts at regular intervals.
+
+### 1. Initialize the Database
+
+First, run the `setup.py` script to create the necessary database tables:
+
+```
+python3 setup.py
+```
+
+### 2. Set up the Cron Job
+
+Next, open your crontab for editing:
+
+```
+crontab -e
+```
+
+Add the following lines to your crontab to schedule the scripts to run daily:
+
+```
+0 3 * * * /usr/bin/python3 /path/to/LinkedInAutoDM/queue_builder.py
+30 3 * * * /usr/bin/python3 /path/to/LinkedInAutoDM/ScrapedIn.py --mode send
+```
+
+**Note:** Make sure to replace `/path/to/LinkedInAutoDM/` with the absolute path to the project directory.
+
 [ScrapedIn Demo.webm](https://github.com/dchrastil/ScrapedIn/assets/26440487/6f7888f9-2fe3-49d7-b6a3-229e508a9da3)
 
 ![ScrapedIn_running](https://github.com/dchrastil/ScrapedIn/assets/26440487/dc99742e-0b73-4aa7-ae1c-34ee6ab1eb25)
@@ -59,5 +88,3 @@ export LI_PASSWORD={password}
 
 ### Disclaimer
 this tool is for educational purposes only and violates LinkedIn.com's TOS. Use at your own risk.
-
-

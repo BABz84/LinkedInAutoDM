@@ -19,12 +19,55 @@ import subprocess
 import urllib
 import math
 import config
+import sqlite3
 from thready import threaded
 from termcolor import colored
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 """ Setup Argument Parameters """
 parser = argparse.ArgumentParser(description='Discovery LinkedIn')
+parser.add_argument('--mode', help='Run in send mode', required=False)
 args = parser.parse_args()
+
+def send_dm(row):
+    """
+    Sends a direct message to a LinkedIn connection.
+
+    This function uses Selenium to navigate to the connection's profile, open the
+    message window, and send a pre-defined template. It also records the message
+    in the local database.
+    """
+    print(colored("[Info] ","green"), colored("Sending message to %s" % row[1],"white"))
+    
+    # Initialize the webdriver
+    driver = webdriver.Chrome()
+    driver.get(f"https://www.linkedin.com/in/{row[0]}")
+
+    # Click the message button
+    driver.find_element(By.CSS_SELECTOR, '[aria-label="Message"]').click()
+
+    # Wait for the message form to be visible and send the message
+    wait = WebDriverWait(driver, 10)
+    message_box = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'div.msg-form__contenteditable')))
+    message_box.send_keys(config.template.format(first=row[1]))
+
+    # Click the send button
+    driver.find_element(By.CSS_SELECTOR, '[data-control-name="send"]').click()
+
+    # Record the message in the database
+    conn = sqlite3.connect('linkedin.db')
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO messages VALUES (?, CURRENT_TIMESTAMP)", (row[0],))
+    conn.commit()
+    conn.close()
+
+    # Sleep for a random interval
+    time.sleep(random.uniform(45, 120))
+
+    driver.quit()
 
 def get_search():
     # Fetch the initial page to get results/page counts
@@ -330,13 +373,24 @@ if __name__ == '__main__':
 _\ \ (__| | | (_| | |_) |  __/ (_| /\/ /_ | | | |
 \__/\___|_|  \__,_| .__/ \___|\__,_\____/ |_| |_|
                   |_|                            
-A tool to scrape LinkedIn v3.0
+A tool to scrape LinkedIn v4.0
 """
     print(colored(title,"blue"))
    
     # Authenticate
     cookies = authenticate()
     
+    if args.mode == 'send':
+        conn = sqlite3.connect('linkedin.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM queue")
+        queue = cursor.fetchall()
+        conn.close()
+
+        for row in queue:
+            send_dm(row)
+        sys.exit()
+
     # Prompt user for ScrapedIn functions
     #sifunc = input("What function do you want to perform?\n\n" + colored("1. ","yellow") + "Single Profile Scrape\n" + colored("2. ","yellow") + "Full Company Employee Scrape\n" + colored("3. ","yellow") + "Profile Match via Email List\n\n" + colored("> ","yellow"))
     sifunc = "2"
