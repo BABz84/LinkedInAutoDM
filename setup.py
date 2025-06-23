@@ -14,7 +14,8 @@ def initialize_database():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS messages (
             profile_id TEXT PRIMARY KEY,
-            sent_at TIMESTAMP
+            sent_at TIMESTAMP,
+            status TEXT
         )
     ''')
 

@@ -11,6 +11,7 @@ import os
 import sys
 import re
 import time
+import random
 import xlsxwriter
 import json
 import argparse
@@ -32,6 +33,12 @@ parser = argparse.ArgumentParser(description='Discovery LinkedIn')
 parser.add_argument('--mode', help='Run in send mode', required=False)
 args = parser.parse_args()
 
+def human_sleep(min_s=45, max_s=120):
+    """
+    Sleeps for a random interval to mimic human behavior.
+    """
+    time.sleep(random.uniform(min_s, max_s))
+
 def send_dm(row):
     """
     Sends a direct message to a LinkedIn connection.
@@ -46,13 +53,26 @@ def send_dm(row):
     driver = webdriver.Chrome()
     driver.get(f"https://www.linkedin.com/in/{row[0]}")
 
+    # Check for captcha/throttle
+    if "checkpoint/challenge" in driver.current_url:
+        print(colored("[Error] ","red"), colored("Captcha or throttle detected. Exiting.","white"))
+        conn = sqlite3.connect('linkedin.db')
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO messages VALUES (?, CURRENT_TIMESTAMP, ?)", (row[0], 'captcha'))
+        conn.commit()
+        conn.close()
+        driver.quit()
+        sys.exit()
+
     # Click the message button
     driver.find_element(By.CSS_SELECTOR, '[aria-label="Message"]').click()
 
     # Wait for the message form to be visible and send the message
     wait = WebDriverWait(driver, 10)
     message_box = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'div.msg-form__contenteditable')))
-    message_box.send_keys(config.template.format(first=row[1]))
+    with open(config.template_path, 'r') as f:
+        template = f.read()
+    message_box.send_keys(template.format(first=row[1]))
 
     # Click the send button
     driver.find_element(By.CSS_SELECTOR, '[data-control-name="send"]').click()
@@ -60,12 +80,12 @@ def send_dm(row):
     # Record the message in the database
     conn = sqlite3.connect('linkedin.db')
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO messages VALUES (?, CURRENT_TIMESTAMP)", (row[0],))
+    cursor.execute("INSERT INTO messages VALUES (?, CURRENT_TIMESTAMP, ?)", (row[0], 'ok'))
     conn.commit()
     conn.close()
 
     # Sleep for a random interval
-    time.sleep(random.uniform(45, 120))
+    human_sleep()
 
     driver.quit()
 

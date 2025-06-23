@@ -22,7 +22,7 @@ def build_queue():
     ''')
 
     # Get connections that were accepted at least 48 hours ago and have not been messaged
-    forty_eight_hours_ago = time.time() - (48 * 60 * 60)
+    forty_eight_hours_ago = time.time() - (config.delay_hours * 60 * 60)
     cursor.execute('''
         SELECT c.profile_id, c.first_name, c.accepted_at
         FROM fs_connections c
