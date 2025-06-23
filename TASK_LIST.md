@@ -51,3 +51,10 @@ This file tracks the required changes to implement the automated direct messagin
 
 - [x] **Add a unit test for the delay filter:**
     - Create a `pytest` that seeds a dummy `accepted_at` 24h ago and expects **not** to enqueue.
+
+## Phase 3: Advanced Features
+
+- [x] **Import config in `queue_builder.py`**
+- [x] **Cap the daily send volume**
+- [x] **Reuse the Selenium session**
+- [x] **Graceful pause after repeated captchas/throttles**

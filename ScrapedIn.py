@@ -21,6 +21,7 @@ import urllib
 import math
 import config
 import sqlite3
+from pathlib import Path
 from thready import threaded
 from termcolor import colored
 from selenium import webdriver
@@ -39,7 +40,7 @@ def human_sleep(min_s=45, max_s=120):
     """
     time.sleep(random.uniform(min_s, max_s))
 
-def send_dm(row):
+def send_dm(row, driver):
     """
     Sends a direct message to a LinkedIn connection.
 
@@ -49,18 +50,24 @@ def send_dm(row):
     """
     print(colored("[Info] ","green"), colored("Sending message to %s" % row[1],"white"))
     
-    # Initialize the webdriver
-    driver = webdriver.Chrome()
     driver.get(f"https://www.linkedin.com/in/{row[0]}")
 
     # Check for captcha/throttle
     if "checkpoint/challenge" in driver.current_url:
-        print(colored("[Error] ","red"), colored("Captcha or throttle detected. Exiting.","white"))
+        print(colored("[Error] ","red"), colored("Captcha or throttle detected.","white"))
         conn = sqlite3.connect('linkedin.db')
         cursor = conn.cursor()
         cursor.execute("INSERT INTO messages VALUES (?, CURRENT_TIMESTAMP, ?)", (row[0], 'captcha'))
         conn.commit()
         conn.close()
+        
+        # Check for recent captchas
+        cursor.execute("SELECT count(*) FROM messages WHERE status = 'captcha' AND sent_at > datetime('now', '-1 hour')")
+        recent_captcha_count = cursor.fetchone()[0]
+        if recent_captcha_count >= 3:
+            print(colored("[Error] ","red"), colored("Three captchas detected in the last hour. Pausing script.","white"))
+            Path("pause.flag").touch()
+
         driver.quit()
         sys.exit()
 
@@ -86,8 +93,6 @@ def send_dm(row):
 
     # Sleep for a random interval
     human_sleep()
-
-    driver.quit()
 
 def get_search():
     # Fetch the initial page to get results/page counts
@@ -386,6 +391,10 @@ def authenticate():
 
 
 if __name__ == '__main__':
+    if Path("pause.flag").exists():
+        print(colored("[Info] ","green"), colored("Pause flag detected. Exiting.","white"))
+        sys.exit()
+
     title = """
  __                               _  _____       
 / _\ ___ _ __ __ _ _ __   ___  __| | \_   \_ __  
@@ -403,12 +412,25 @@ A tool to scrape LinkedIn v4.0
     if args.mode == 'send':
         conn = sqlite3.connect('linkedin.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM queue")
+
+        # Get count of messages sent today
+        cursor.execute("SELECT count(*) FROM messages WHERE date(sent_at) = date('now')")
+        sent_today = cursor.fetchone()[0]
+
+        limit = config.daily_cap - sent_today
+
+        if limit <= 0:
+            print(colored("[Info] ","green"), colored("Daily cap reached. Exiting.","white"))
+            sys.exit()
+
+        cursor.execute("SELECT profile_id, first_name FROM queue ORDER BY accepted_at LIMIT ?", (limit,))
         queue = cursor.fetchall()
         conn.close()
 
+        driver = webdriver.Chrome()
         for row in queue:
-            send_dm(row)
+            send_dm(row, driver)
+        driver.quit()
         sys.exit()
 
     # Prompt user for ScrapedIn functions

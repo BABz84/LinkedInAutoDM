@@ -1,5 +1,6 @@
 import sqlite3
 import time
+import config
 
 def build_queue():
     """
