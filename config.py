@@ -1,29 +1,25 @@
-#!/usr/bin/python
-import os
-from dotenv import load_dotenv
+# --- General Configuration ---
 
-load_dotenv()
+# The path to the message template you want to send.
+# You can create multiple templates in the /templates/ directory.
+TEMPLATE = "templates/investor_intro.md"
 
-## [LINKEDIN CREDENTIALS] ##
-# it may be preferable to use a fake
-# account to avoid account suspension
+# --- Throttling Configuration ---
 
-linkedin = dict(
-    username = os.getenv("LI_USERNAME"),
-    password = os.getenv("LI_PASSWORD"),
-)
+# The bot will not send a message to a new connection
+# until at least this many hours have passed.
+DELAY_HOURS = 48
 
-## [PROXY LIST] ##
-# Leave empty to use your own IP address
-# by using a proxy you can avoid being
-# blocked for sending too much traffic
+# The maximum number of messages the bot will send in a single day.
+DAILY_CAP = 25
 
-proxylist = []
-#proxylist.append('http://127.0.0.1:8080')
+# --- "Human-Like" Behavior Configuration ---
 
-## [MISCELLANEOUS] ##
+# To avoid detection, the bot will only run during these hours.
+# Use 24-hour format (e.g., 9 for 9 AM, 17 for 5 PM).
+WORKING_HOURS = {"start": 9, "end": 23}
 
-timeout = 10
-delay_hours = 48
-daily_cap = 100
-template_path = "templates/investor_intro.md"
+# Set your local timezone.
+# A list of valid timezones can be found here:
+# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+TIMEZONE = "America/Chicago"

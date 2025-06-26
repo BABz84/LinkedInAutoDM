@@ -1,76 +1,92 @@
-# ScrapedIn
-Tool to scrape LinkedIn
+# LinkedIn Auto-Messenger
 
-This tool assists in performing reconnaissance using the LinkedIn.com website/API for red team or social engineering engagements. It performs a company specific search to extract a detailed list of employees who work for the target company. Enter the name of the target company and the tool will help determine the LinkedIn company ID, which will be used to perform the search.
+**Objective:** A tool to automatically send personalized direct messages to your LinkedIn connections. This tool is intended for efficient and targeted outreach.
 
-**NOTE:** The tool extracts the maximum results of any search (1,000 contacts) by sendings less than 20 requests. 
+**NOTE:** This tool is designed to interact with the LinkedIn website in a way that mimics human behavior to reduce the risk of account suspension. However, any form of automation is against the LinkedIn Terms of Service. Use this tool responsibly and at your own risk.
 
-Output is stored as an XLSX file, however it is intended to be used with Google Spreadsheets and includes a formated report with profile pictures, etc. After importing the XLSX into Google Spreadsheets there will be a "dataset" worksheet and a "report" worksheet.
+---
 
-## How to install
-```
-sudo apt-get install python3-pip -y
-sudo pip install -r requirements.txt
-```
+## 1. Installation
 
-## How to run
+To get started, you need Python 3 and pip installed.
 
-```
-export LI_USERNAME={username}
-export LI_PASSWORD={password}
-```
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository_url>
+    cd LinkedInAutoDM
+    ```
 
-`python3 ScrapedIn.py`
+2.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-## Automated Messaging
+---
 
-To enable automated direct messaging, you'll need to set up a cron job to run the `queue_builder.py` and `ScrapedIn.py` scripts at regular intervals.
+## 2. Configuration
 
-### 1. Initialize the Database
+The application requires credentials and other settings to be configured in a `.env` file.
 
-First, run the `setup.py` script to create the necessary database tables:
+1.  **Create the environment file:**
+    Make a copy of the example file and name it `.env`:
+    ```bash
+    cp .env.example .env
+    ```
 
-```
-python3 setup.py
-```
+2.  **Edit the `.env` file:**
+    Open the `.env` file in a text editor and add your LinkedIn credentials:
+    ```
+    LI_USERNAME="your_linkedin_email@example.com"
+    LI_PASSWORD="your_linkedin_password"
+    ```
 
-### 2. Set up the Cron Job
+---
 
-Next, open your crontab for editing:
+## 3. Getting Started: First-Time Setup
 
-```
-crontab -e
-```
+Before you can send messages, you need to perform these two one-time setup steps:
 
-Add the following lines to your crontab to schedule the scripts to run daily:
+1.  **Create the Database:**
+    This command creates the `data.sqlite3` file that will track your messaging activity.
+    ```bash
+    python db.py
+    ```
 
-```
-0 3 * * * /usr/bin/python3 /path/to/LinkedInAutoDM/queue_builder.py
-30 3 * * * /usr/bin/python3 /path/to/LinkedInAutoDM/ScrapedIn.py --mode send
-```
+2.  **Log In to LinkedIn:**
+    This command will open a browser and ask you to log in. After a successful login, it will save a session cookie so you don't have to log in again.
+    ```bash
+    python auth.py
+    ```
 
-**Note:** Make sure to replace `/path/to/LinkedInAutoDM/` with the absolute path to the project directory.
+## 4. Regular Use
 
-[ScrapedIn Demo.webm](https://github.com/dchrastil/ScrapedIn/assets/26440487/6f7888f9-2fe3-49d7-b6a3-229e508a9da3)
+Once you have completed the setup, you only need to run these two commands to send messages:
 
-![ScrapedIn_running](https://github.com/dchrastil/ScrapedIn/assets/26440487/dc99742e-0b73-4aa7-ae1c-34ee6ab1eb25)
+1.  **Build the Message Queue:**
+    ```bash
+    python queue_builder.py
+    ```
 
-![ScrapedIn_report](https://github.com/dchrastil/ScrapedIn/assets/26440487/ac563397-391d-4059-89df-cb7305b6163a)
+2.  **Send Messages:**
+    ```bash
+    python send.py
+    ```
 
+---
+## 5. Customizing Your Message
 
-## dataset
-- first name
-- last name
-- occupation
-- location
-- industry
-- profile URL
-- picture URL
+You can create and use different message templates.
 
-## report
-- Picture (displayed)
-- Full Name, Occupation
-- Link to Profile
+1.  **Create a new template:**
+    Add a new `.md` file in the `/templates` directory. You can use `{first}` as a placeholder for the contact's first name.
+
+2.  **Select the template:**
+    Open `config.py` and change the `TEMPLATE` variable to point to your new file.
+    ```python
+    TEMPLATE = "templates/your_new_template.md"
+    ```
+
+---
 
 ## Sponsorship
 [<img src="proxycurl.png" width=350>](https://nubela.co/proxycurl?utm_campaign=influencer_marketing&utm_source=github&utm_medium=social&utm_content=daniel_chrastil_scrapedin)
@@ -87,4 +103,4 @@ Add the following lines to your crontab to schedule the scripts to run daily:
 > Built for developers, by developers.
 
 ### Disclaimer
-this tool is for educational purposes only and violates LinkedIn.com's TOS. Use at your own risk.
+This tool is for educational purposes only. Automating interactions on LinkedIn violates their Terms of Service. Use this tool responsibly and at your own risk. The developers are not responsible for any consequences of using this software, including but not limited to account suspension or termination.
